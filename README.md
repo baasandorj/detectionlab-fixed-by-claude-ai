@@ -10,6 +10,10 @@ DetectionLab is tested weekly on Saturdays via a scheduled CircleCI workflow to 
 [![GitHub last commit](https://img.shields.io/github/last-commit/clong/DetectionLab.svg?style=flat-square)](https://github.com/clong/DetectionLab/commit/master)
 [![Twitter](https://img.shields.io/twitter/follow/DetectionLab.svg?style=social)](https://twitter.com/DetectionLab)
 
+**This is a maintained fork with VMware Workstation Pro compatibility fixes — see [FORK-NOTES.md](FORK-NOTES.md) for details.**
+
+**Note:** The original documentation site (<https://detectionlab.network/>) appears to be down. For historical guidance on installation and deployment (including instructions for Azure, AWS, VirtualBox, etc.), see the Wayback Machine archive: <https://web.archive.org/web/20240303142926/https://detectionlab.network/introduction/>
+
 ## Purpose
 This lab has been designed with defenders in mind. Its primary purpose is to allow the user to quickly build a Windows domain that comes pre-loaded with security tooling and some best practices when it comes to system logging configurations. It can easily be modified to fit most needs or expanded to include additional hosts.
 
