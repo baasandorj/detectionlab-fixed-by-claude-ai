@@ -48,11 +48,13 @@ This repo (clong/DetectionLab) is unmaintained since 2023. When running
    and is not affected.
 
 7. Network Location popup ("Do you want to allow your PC to be discoverable...")
-   blocks headless/WinRM sessions since it needs GUI interaction. Fix:
+   blocks headless/WinRM sessions since it needs GUI interaction. FIX APPLIED:
    `New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff" -Force`
-   to suppress it going forward, and
+   is now run early in scripts/provision.ps1 (before the domain-join logic,
+   which is the most likely trigger) on every Windows box, so the popup is
+   suppressed proactively instead of needing a reactive fix. If one still
+   gets stuck despite that, resolve it with:
    `Get-NetConnectionProfile | Set-NetConnectionProfile -NetworkCategory Private`
-   to resolve one already stuck.
 8. General pattern: if a provisioning step goes silent for an extended
    period (10+ min) with vmware-vmx CPU still active but no new log
    output, suspect an interactive prompt with no TTY to answer it

@@ -26,6 +26,12 @@ Get-NetAdapterBinding -ComponentID ms_tcpip6
 # https://support.microsoft.com/en-gb/help/929852/guidance-for-configuring-ipv6-in-windows-for-advanced-users
 reg add "HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip6\Parameters" /v DisabledComponents /t REG_DWORD /d 255 /f
 
+# Suppress the "Set Network Location" popup for any new network this box joins
+# (e.g. on domain join below) - it needs GUI interaction and blocks headless/WinRM
+# provisioning sessions since there's nothing to click it.
+Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Suppressing the Network Location popup..."
+New-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Network\NewNetworkWindowOff" -Force | Out-Null
+
 if ($env:COMPUTERNAME -imatch 'vagrant') {
 
   Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Hostname is still the original one, skip provisioning for reboot..."
