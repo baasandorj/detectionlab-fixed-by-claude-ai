@@ -3,6 +3,12 @@
 If (-not (Test-Path "C:\ProgramData\chocolatey")) {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Installing Chocolatey"
+  # Pinned to 1.4.0: Chocolatey 2.x+ requires .NET Framework 4.8, and its
+  # auto-installer needs a reboot before Chocolatey CLI works again, which
+  # breaks non-interactive provisioning (choco install calls silently fail
+  # with .NET LoaderExceptions until that reboot happens). 1.4.0 predates
+  # this requirement.
+  $env:chocolateyVersion = "1.4.0"
   Invoke-Expression ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
 } else {
   Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Chocolatey is already installed."

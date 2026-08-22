@@ -144,19 +144,13 @@ install_splunk() {
     dig @8.8.8.8 splunk.com >/dev/null
     dig @8.8.8.8 www.splunk.com >/dev/null
 
-    # Try to resolve the latest version of Splunk by parsing the HTML on the downloads page
-    echo "[$(date +%H:%M:%S)]: Attempting to autoresolve the latest version of Splunk..."
-    LATEST_SPLUNK=$(curl https://www.splunk.com/en_us/download/splunk-enterprise.html | grep -i deb | grep -Eo "data-link=\"................................................................................................................................" | cut -d '"' -f 2)
-    # Sanity check what was returned from the auto-parse attempt
-    if [[ "$(echo "$LATEST_SPLUNK" | grep -c "^https:")" -eq 1 ]] && [[ "$(echo "$LATEST_SPLUNK" | grep -c "\.deb$")" -eq 1 ]]; then
-      echo "[$(date +%H:%M:%S)]: The URL to the latest Splunk version was automatically resolved as: $LATEST_SPLUNK"
-      echo "[$(date +%H:%M:%S)]: Attempting to download..."
-      wget --progress=bar:force -P /opt "$LATEST_SPLUNK"
-    else
-      echo "[$(date +%H:%M:%S)]: Unable to auto-resolve the latest Splunk version. Falling back to hardcoded URL..."
-      # Download Hardcoded Splunk
-      wget --progress=bar:force -O /opt/splunk-8.0.2-a7f645ddaf91-linux-2.6-amd64.deb 'https://download.splunk.com/products/splunk/releases/8.0.2/linux/splunk-8.0.2-a7f645ddaf91-linux-2.6-amd64.deb&wget=true'
-    fi
+    # Pinned to 8.2.12 (last 8.2.x release) instead of auto-resolving the latest version.
+    # Splunk 9.x+ enforces a mandatory admin password complexity policy that rejects
+    # weak/common passwords (including "changeme"), which causes the --seed-passwd
+    # below to hang on an unanswerable interactive re-prompt during non-interactive
+    # provisioning. 8.2.12 predates that policy.
+    echo "[$(date +%H:%M:%S)]: Downloading pinned Splunk version 8.2.12..."
+    wget --progress=bar:force -O /opt/splunk-8.2.12-e973afd6886e-linux-2.6-amd64.deb 'https://download.splunk.com/products/splunk/releases/8.2.12/linux/splunk-8.2.12-e973afd6886e-linux-2.6-amd64.deb'
     if ! ls /opt/splunk*.deb 1>/dev/null 2>&1; then
       echo "Something went wrong while trying to download Splunk. This script cannot continue. Exiting."
       exit 1
@@ -378,15 +372,25 @@ install_zeek() {
   echo "[$(date +%H:%M:%S)]: Installing Zeek..."
   # Environment variables
   NODECFG=/opt/zeek/etc/node.cfg
+  # security:zeek OBS project dropped xUbuntu_20.04 packaging; only 22.04+ is published now.
+  # Attempting to install the 22.04 build here even though this box is 20.04.
   if ! grep 'zeek' /etc/apt/sources.list.d/security:zeek.list &> /dev/null; then
-    sh -c "echo 'deb http://download.opensuse.org/repositories/security:/zeek/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/security:zeek.list"
+    sh -c "echo 'deb http://download.opensuse.org/repositories/security:/zeek/xUbuntu_22.04/ /' > /etc/apt/sources.list.d/security:zeek.list"
   fi
-  wget -nv https://download.opensuse.org/repositories/security:zeek/xUbuntu_20.04/Release.key -O /tmp/Release.key 
+  wget -nv https://download.opensuse.org/repositories/security:zeek/xUbuntu_22.04/Release.key -O /tmp/Release.key
   apt-key add - </tmp/Release.key &>/dev/null
   # Update APT repositories
   apt-get -qq -ym update
   # Install tools to build and configure Zeek
   apt-get -qq -ym install zeek-lts crudini
+  # The xUbuntu_22.04 zeek-lts build is not installable on this Ubuntu 20.04 box
+  # (unmet glibc/library dependencies), and upstream no longer publishes a 20.04
+  # build at all. Bail out here instead of cascading through the rest of this
+  # function (zkg, node.cfg, systemd) with a half-installed Zeek.
+  if [ ! -x /opt/zeek/bin/zeek-config ]; then
+    echo "[$(date +%H:%M:%S)]: Zeek installation failed (no compatible package available for this OS). Skipping Zeek."
+    return
+  fi
   export PATH=$PATH:/opt/zeek/bin
   pip3 install zkg==2.1.1
   zkg refresh

@@ -4,6 +4,8 @@ Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Installing additional Choco packages.
 
 If (-not (Test-Path "C:\ProgramData\chocolatey")) {
   Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Installing Chocolatey"
+  # Pinned to 1.4.0 - see install-utilities.ps1 for why.
+  $env:chocolateyVersion = "1.4.0"
   iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
 } else {
   Write-Host "$('[{0:HH:mm}]' -f (Get-Date)) Chocolatey is already installed."
